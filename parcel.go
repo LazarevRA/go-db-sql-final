@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"fmt"
 
 	_ "modernc.org/sqlite"
 )
@@ -43,7 +44,10 @@ func (s ParcelStore) Get(number int) (Parcel, error) {
 	// заполняем объект Parcel данными из таблицы
 	p := Parcel{}
 	err := row.Scan(&p.Number, &p.Client, &p.Status, &p.Address, &p.CreatedAt)
-
+	if err != nil {
+		fmt.Println(err)
+		return Parcel{}, err
+	}
 	return p, err
 }
 
@@ -55,8 +59,9 @@ func (s ParcelStore) GetByClient(client int) ([]Parcel, error) {
 	var res []Parcel
 
 	if err != nil {
-		return res, err
+		return nil, err
 	}
+
 	defer rows.Close()
 
 	//заполняем срез Parcel данными из таблицы
@@ -66,10 +71,14 @@ func (s ParcelStore) GetByClient(client int) ([]Parcel, error) {
 		err := rows.Scan(&parcel.Number, &parcel.Client, &parcel.Status, &parcel.Address, &parcel.CreatedAt)
 
 		if err != nil {
-			return res, err
+			return nil, err
 		}
 		res = append(res, parcel)
 
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
 	}
 
 	return res, nil
